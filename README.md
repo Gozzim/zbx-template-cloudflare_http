@@ -1,6 +1,9 @@
 
 # Cloudflare by HTTP
 
+Original Script by [Zabbix - Maxim Chudinov](https://git.zabbix.com/projects/ZBX/repos/zabbix/browse/templates/app/cloudflare_http)  
+Modified by [Gozzim](https://github.com/Gozzim)
+
 ## Overview
 
 For Zabbix version: 6.0 and higher  
@@ -71,6 +74,17 @@ There are no template links in this template.
 |General |Cloudflare: Total threats |<p>The number of all threats.</p> |DEPENDENT |cloudflare.threats.all<p>**Preprocessing**:</p><p>- JSONPATH: `$.threats.all`</p> |
 |General |Cloudflare: Unique visitors |<p>The number of all visitors IPs.</p> |DEPENDENT |cloudflare.uniques.all<p>**Preprocessing**:</p><p>- JSONPATH: `$.uniques.all`</p> |
 |Zabbix_raw_items |Cloudflare: Get data |<p>The JSON with result of Cloudflare API request.</p> |SCRIPT |cloudflare.get<p>**Expression**:</p>`The text is too long. Please see the template.` |
+
+## Discovery Rules
+
+|Group| Name                            | Description                                    |Type| Items                    | Key and additional info                                                         |
+|-----|---------------------------------|------------------------------------------------|----|--------------------------|---------------------------------------------------------------------------------|
+|General | Cloudflare: Browser Requests    | <p>Discovered Browser Requests.</p>            |DEPENDENT | Page views               | cloudflare.browsers<p>**Preprocessing**:</p><p>- JSONPATH: `$.browserRequests`</p> |
+|General | Cloudflare: Client HTTP Version | <p>Discovered Http Protocol Versions Used.</p> |DEPENDENT | Requests                 | cloudflare.httpversion<p>**Preprocessing**:</p><p>- JSONPATH: `$.clientHTTPVersionMap`</p> |
+|General | Cloudflare: Content Type        | <p>Discovered Content Type Delivered.</p>      |DEPENDENT | Requests, Bytes          | cloudflare.content<p>**Preprocessing**:</p><p>- JSONPATH: `$.contentTypeMap`</p>   |
+|General | Cloudflare: Countries           | <p>Discovered Country Requests.</p>            |DEPENDENT | Requests, Bytes, Threats | cloudflare.countries<p>**Preprocessing**:</p><p>- JSONPATH: `$.countries`</p>  |
+|General | Cloudflare: Ip Class Map        | <p>Discovered Ip Classes.</p>                  |DEPENDENT | Requests                 | cloudflare.ipclass<p>**Preprocessing**:</p><p>- JSONPATH: `$.ipClassMap`</p>   |
+|General | Cloudflare: SSL Type Requests   | <p>Discovered SSL Version Requests.</p>        |DEPENDENT | Requests                 | cloudflare.ssl.type<p>**Preprocessing**:</p><p>- JSONPATH: `$.SSLRequests`</p>   |
 
 ## Triggers
 

@@ -1,6 +1,6 @@
 zabbix_export:
   version: '6.0'
-  date: '2021-12-15T06:56:45Z'
+  date: '2022-03-07T11:43:00Z'
   groups:
     -
       uuid: a571c0d144b14fd4a87a9d9b2aa9fcd6
@@ -365,7 +365,7 @@ zabbix_export:
                 var datetime_end = new Date(),
                     datetime_start = new Date();
             
-                datetime_start.setTime(datetime_end.getTime() - 3600000);
+                datetime_start.setTime(datetime_end.getTime() - 60 * 60 * 1000);
                 datetime_start.setMinutes(0, 0, 0);
                 datetime_end.setTime(datetime_start.getTime());
                 datetime_end.setMinutes(59, 59, 0);
@@ -374,8 +374,8 @@ zabbix_export:
                     datetime_end_str = datetime_end.toISOString();
             
                 var data = {
-                    "query": "{viewer {zones(filter: {zoneTag: " + Cloudflare.params.zone + "}) {\
-                    httpRequests1hGroups(limit: 100 filter: {\
+                    "query": "{viewer {zones(filter: {zoneTag: \"" + Cloudflare.params.zone + "\"}) {\
+                    httpRequests1hGroups(limit: 1000 filter: {\
                         datetime_geq: \"" + datetime_start_str + "\",  datetime_leq: \"" + datetime_end_str + "\"\
                         }) {\
                             sum{\
@@ -388,6 +388,33 @@ zabbix_export:
                                 encryptedBytes\
                                 threats\
                                 pageViews\
+                                countryMap {\
+                                    clientCountryName\
+                                    requests\
+                                    bytes\
+                                    threats\
+                                }\
+                                browserMap {\
+                                    pageViews\
+                                    key: uaBrowserFamily\
+                                }\
+                                clientSSLMap {\
+                                    requests\
+                                    key: clientSSLProtocol\
+                                }\
+                                ipClassMap{\
+                                    ipType,\
+                                    requests\
+                                }\
+                                clientHTTPVersionMap{\
+                                    clientHTTPProtocol,\
+                                    requests\
+                                }\
+                                contentTypeMap{\
+                                    bytes,\
+                                    requests,\
+                                    edgeResponseContentTypeName\
+                                }\
                             }\
                             uniq{uniques}\
                             }\
@@ -423,7 +450,13 @@ zabbix_export:
                         },
                         pageviews: {
                             all: res.pageViews || 0
-                        }
+                        },
+                        browserRequests: res.browserMap || [],
+                        SSLRequests: res.clientSSLMap || [],
+                        countries: res.countryMap || [],
+                        clientHTTPVersionMap: res.clientHTTPVersionMap || [],
+                        contentTypeMap: res.contentTypeMap || [],
+                        ipClassMap: res.ipClassMap || []
                     }
             
                     cloudflare.requests.uncached = res.requests - res.cachedRequests;
@@ -930,6 +963,402 @@ zabbix_export:
             -
               tag: type
               value: gauge
+      discovery_rules:
+        -
+          uuid: 4699bcd668ac416c86490dce49670233
+          name: 'Browser Requests'
+          type: DEPENDENT
+          key: cloudflare.browsers
+          delay: '0'
+          item_prototypes:
+            -
+              uuid: 4f89b254ef404cd4ae6d57b070846def
+              name: 'Browser {#NAME} Page Views'
+              type: DEPENDENT
+              key: 'cloudflare.browsers[{#NAME},views]'
+              delay: '0'
+              preprocessing:
+                -
+                  type: REGEX
+                  parameters:
+                    - $
+                    - '{#VIEWS}'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              master_item:
+                key: cloudflare.get
+              tags:
+                -
+                  tag: resource
+                  value: browsers
+                -
+                  tag: target
+                  value: cloudflare
+                -
+                  tag: type
+                  value: gauge
+          master_item:
+            key: cloudflare.get
+          lld_macro_paths:
+            -
+              lld_macro: '{#NAME}'
+              path: $.key
+            -
+              lld_macro: '{#VIEWS}'
+              path: $.pageViews
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.browserRequests
+        -
+          uuid: e1a4946d20814a4089c23873a0063f32
+          name: 'Content Type'
+          type: DEPENDENT
+          key: cloudflare.content
+          delay: '0'
+          item_prototypes:
+            -
+              uuid: 034d94bb269c4d29a9925b1e3422e9f1
+              name: 'ContentType {#NAME} Bytes'
+              type: DEPENDENT
+              key: 'cloudflare.content.[{#NAME},bytes]'
+              delay: '0'
+              units: B
+              preprocessing:
+                -
+                  type: REGEX
+                  parameters:
+                    - $
+                    - '{#BYTES}'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              master_item:
+                key: cloudflare.get
+              tags:
+                -
+                  tag: content
+                  value: '{#NAME}'
+                -
+                  tag: resource
+                  value: content
+                -
+                  tag: target
+                  value: cloudflare
+                -
+                  tag: type
+                  value: byte
+            -
+              uuid: e80001ba51ee4658b33ad898a072aa3d
+              name: 'ContentType {#NAME} Requests'
+              type: DEPENDENT
+              key: 'cloudflare.content.[{#NAME},requests]'
+              delay: '0'
+              preprocessing:
+                -
+                  type: REGEX
+                  parameters:
+                    - $
+                    - '{#REQUESTS}'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              master_item:
+                key: cloudflare.get
+              tags:
+                -
+                  tag: content
+                  value: '{#NAME}'
+                -
+                  tag: resource
+                  value: content
+                -
+                  tag: target
+                  value: cloudflare
+                -
+                  tag: type
+                  value: requests
+          master_item:
+            key: cloudflare.get
+          lld_macro_paths:
+            -
+              lld_macro: '{#BYTES}'
+              path: $.bytes
+            -
+              lld_macro: '{#NAME}'
+              path: $.edgeResponseContentTypeName
+            -
+              lld_macro: '{#REQUESTS}'
+              path: $.requests
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.contentTypeMap
+        -
+          uuid: 7306fd50616d4bb7a69e3e652fa25ae1
+          name: Countries
+          type: DEPENDENT
+          key: cloudflare.countries
+          delay: '0'
+          item_prototypes:
+            -
+              uuid: 89555a83f62942ea978643053e3be915
+              name: 'Country {#NAME} Bytes'
+              type: DEPENDENT
+              key: 'cloudflare.countries.[{#NAME},bytes]'
+              delay: '0'
+              units: B
+              preprocessing:
+                -
+                  type: REGEX
+                  parameters:
+                    - $
+                    - '{#BYTES}'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              master_item:
+                key: cloudflare.get
+              tags:
+                -
+                  tag: code
+                  value: '{#NAME}'
+                -
+                  tag: resource
+                  value: countries
+                -
+                  tag: target
+                  value: cloudflare
+                -
+                  tag: type
+                  value: byte
+            -
+              uuid: 9edaea1513194672bb9d800d44d42bb3
+              name: 'Country {#NAME} Requests'
+              type: DEPENDENT
+              key: 'cloudflare.countries.[{#NAME},requests]'
+              delay: '0'
+              preprocessing:
+                -
+                  type: REGEX
+                  parameters:
+                    - $
+                    - '{#REQUESTS}'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              master_item:
+                key: cloudflare.get
+              tags:
+                -
+                  tag: code
+                  value: '{#NAME}'
+                -
+                  tag: resource
+                  value: countries
+                -
+                  tag: target
+                  value: cloudflare
+                -
+                  tag: type
+                  value: requests
+            -
+              uuid: a27d8f6b6c80462aad35ac93ee9a4172
+              name: 'Country {#NAME} Threats'
+              type: DEPENDENT
+              key: 'cloudflare.countries.[{#NAME},threats]'
+              delay: '0'
+              preprocessing:
+                -
+                  type: REGEX
+                  parameters:
+                    - $
+                    - '{#THREATS}'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              master_item:
+                key: cloudflare.get
+              tags:
+                -
+                  tag: code
+                  value: '{#NAME}'
+                -
+                  tag: resource
+                  value: countries
+                -
+                  tag: target
+                  value: cloudflare
+                -
+                  tag: type
+                  value: threats
+          master_item:
+            key: cloudflare.get
+          lld_macro_paths:
+            -
+              lld_macro: '{#BYTES}'
+              path: $.bytes
+            -
+              lld_macro: '{#NAME}'
+              path: $.clientCountryName
+            -
+              lld_macro: '{#REQUESTS}'
+              path: $.requests
+            -
+              lld_macro: '{#THREATS}'
+              path: $.threats
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.countries
+        -
+          uuid: a6dd310084fd4d54bc8aee8191d25860
+          name: 'Client HTTP Version'
+          type: DEPENDENT
+          key: cloudflare.httpversion
+          delay: '0'
+          item_prototypes:
+            -
+              uuid: 0b9ee18b289b482f98f99cf827850c3f
+              name: 'HttpVersion {#PROTOCOL} Requests'
+              type: DEPENDENT
+              key: 'cloudflare.httpversion[{#PROTOCOL},requests]'
+              delay: '0'
+              preprocessing:
+                -
+                  type: REGEX
+                  parameters:
+                    - $
+                    - '{#REQUESTS}'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              master_item:
+                key: cloudflare.get
+              tags:
+                -
+                  tag: protocol
+                  value: '{#PROTOCOL}'
+                -
+                  tag: resource
+                  value: httpversion
+                -
+                  tag: target
+                  value: cloudflare
+                -
+                  tag: type
+                  value: gauge
+          master_item:
+            key: cloudflare.get
+          lld_macro_paths:
+            -
+              lld_macro: '{#PROTOCOL}'
+              path: $.clientHTTPProtocol
+            -
+              lld_macro: '{#REQUESTS}'
+              path: $.requests
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.clientHTTPVersionMap
+        -
+          uuid: 8da005a8e37c43ad969339fff480e1f2
+          name: 'Ip Class Map'
+          type: DEPENDENT
+          key: cloudflare.ipclass
+          delay: '0'
+          item_prototypes:
+            -
+              uuid: 95aefc6732334516abd6f13b1abccf16
+              name: 'IpClass {#IPTYPE} Requests'
+              type: DEPENDENT
+              key: 'cloudflare.ipclass[{#IPTYPE},requests]'
+              delay: '0'
+              preprocessing:
+                -
+                  type: REGEX
+                  parameters:
+                    - $
+                    - '{#REQUESTS}'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              master_item:
+                key: cloudflare.get
+              tags:
+                -
+                  tag: ipclass
+                  value: '{#IPTYPE}'
+                -
+                  tag: resource
+                  value: ipclass
+                -
+                  tag: target
+                  value: cloudflare
+                -
+                  tag: type
+                  value: gauge
+          master_item:
+            key: cloudflare.get
+          lld_macro_paths:
+            -
+              lld_macro: '{#IPTYPE}'
+              path: $.ipType
+            -
+              lld_macro: '{#REQUESTS}'
+              path: $.requests
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.ipClassMap
+        -
+          uuid: ee28b072fbdb47e2b9cbe8f9e8f17f3d
+          name: 'SSL Type Requests'
+          type: DEPENDENT
+          key: cloudflare.ssl.type
+          delay: '0'
+          item_prototypes:
+            -
+              uuid: 8970b570b7b4485c9b364c4d9257cd2d
+              name: 'SSL Type {#NAME} Requests'
+              type: DEPENDENT
+              key: 'cloudflare.ssl.type[{#NAME},requests]'
+              delay: '0'
+              preprocessing:
+                -
+                  type: REGEX
+                  parameters:
+                    - $
+                    - '{#REQUESTS}'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              master_item:
+                key: cloudflare.get
+              tags:
+                -
+                  tag: resource
+                  value: ssl
+                -
+                  tag: target
+                  value: cloudflare
+                -
+                  tag: type
+                  value: gauge
+                -
+                  tag: version
+                  value: '{#NAME}'
+          master_item:
+            key: cloudflare.get
+          lld_macro_paths:
+            -
+              lld_macro: '{#NAME}'
+              path: $.key
+            -
+              lld_macro: '{#REQUESTS}'
+              path: $.requests
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.SSLRequests
       macros:
         -
           macro: '{$CLOUDFLARE.API.TOKEN}'
