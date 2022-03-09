@@ -77,14 +77,14 @@ There are no template links in this template.
 
 ## Discovery Rules
 
-|Group| Name                            | Description                                    |Type| Items                    | Key and additional info                                                         |
-|-----|---------------------------------|------------------------------------------------|----|--------------------------|---------------------------------------------------------------------------------|
-|General | Cloudflare: Browser Requests    | <p>Discovered Browser Requests.</p>            |DEPENDENT | Page views               | cloudflare.browsers<p>**Preprocessing**:</p><p>- JSONPATH: `$.browserRequests`</p> |
-|General | Cloudflare: Client HTTP Version | <p>Discovered Http Protocol Versions Used.</p> |DEPENDENT | Requests                 | cloudflare.httpversion<p>**Preprocessing**:</p><p>- JSONPATH: `$.clientHTTPVersionMap`</p> |
-|General | Cloudflare: Content Type        | <p>Discovered Content Type Delivered.</p>      |DEPENDENT | Requests, Bytes          | cloudflare.content<p>**Preprocessing**:</p><p>- JSONPATH: `$.contentTypeMap`</p>   |
-|General | Cloudflare: Countries           | <p>Discovered Country Requests.</p>            |DEPENDENT | Requests, Bytes, Threats | cloudflare.countries<p>**Preprocessing**:</p><p>- JSONPATH: `$.countries`</p>  |
-|General | Cloudflare: Ip Class Map        | <p>Discovered Ip Classes.</p>                  |DEPENDENT | Requests                 | cloudflare.ipclass<p>**Preprocessing**:</p><p>- JSONPATH: `$.ipClassMap`</p>   |
-|General | Cloudflare: SSL Type Requests   | <p>Discovered SSL Version Requests.</p>        |DEPENDENT | Requests                 | cloudflare.ssl.type<p>**Preprocessing**:</p><p>- JSONPATH: `$.SSLRequests`</p>   |
+| Name                            | Description                                    |Type| Items                    | Key and additional info                                                         |
+|---------------------------------|------------------------------------------------|----|--------------------------|---------------------------------------------------------------------------------|
+| Cloudflare: Browser Requests    | <p>Discovered Browser Requests.</p>            |DEPENDENT | Page views               | cloudflare.browsers<p>**Preprocessing**:</p><p>- JSONPATH: `$.browserRequests`</p> |
+| Cloudflare: Client HTTP Version | <p>Discovered Http Protocol Versions Used.</p> |DEPENDENT | Requests                 | cloudflare.httpversion<p>**Preprocessing**:</p><p>- JSONPATH: `$.clientHTTPVersionMap`</p> |
+| Cloudflare: Content Type        | <p>Discovered Content Type Delivered.</p>      |DEPENDENT | Requests, Bytes          | cloudflare.content<p>**Preprocessing**:</p><p>- JSONPATH: `$.contentTypeMap`</p>   |
+| Cloudflare: Countries           | <p>Discovered Country Requests.</p>            |DEPENDENT | Requests, Bytes, Threats | cloudflare.countries<p>**Preprocessing**:</p><p>- JSONPATH: `$.countries`</p>  |
+| Cloudflare: Ip Class Map        | <p>Discovered Ip Classes.</p>                  |DEPENDENT | Requests                 | cloudflare.ipclass<p>**Preprocessing**:</p><p>- JSONPATH: `$.ipClassMap`</p>   |
+| Cloudflare: SSL Type Requests   | <p>Discovered SSL Version Requests.</p>        |DEPENDENT | Requests                 | cloudflare.ssl.type<p>**Preprocessing**:</p><p>- JSONPATH: `$.SSLRequests`</p>   |
 
 ## Triggers
 
